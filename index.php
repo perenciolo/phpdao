@@ -1,6 +1,6 @@
 <?php
 
-require_once 'config.php';
+require_once 'config'.DIRECTORY_SEPARATOR.'config.php';
 
 $sql = new DbConnection();
 
