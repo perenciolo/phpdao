@@ -1,12 +1,14 @@
 <?php
 
+require_once 'config'.DIRECTORY_SEPARATOR.'constants.php';
+
 class DbConnection extends PDO
 {
     private $conn;
 
     public function __construct()
     {
-        $this->conn = new PDO('mysql:host=localhost;dbname=dbphp7', 'gus', '@Root007');
+        $this->conn = new PDO('mysql:host=localhost;dbname=dbphp7', DB_USER, DB_PWD);
     }
 
     private function setParams($statement, $parameters = array())
