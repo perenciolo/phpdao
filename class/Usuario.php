@@ -172,7 +172,13 @@ class Usuario
         $this->setData($results[0]);
     }
 
-    public function update($login, $senha)
+    /**
+     * Update database data.
+     *
+     * @param login type string
+     * @param senha type string
+     */
+    public function update($login, $senha): void
     {
         $this->setLogin($login);
         $this->setSenha($senha);
@@ -184,6 +190,23 @@ class Usuario
             ':PASSWD' => $this->getSenha(),
             ':ID' => $this->getId(),
         ));
+    }
+
+    /**
+     * Delete from database data.
+     */
+    public function delete()
+    {
+        $sql = new DbConnection();
+
+        $sql->query('DELETE FROM tb_usuarios WHERE id = :ID', array(
+            ':ID' => $this->getId(),
+        ));
+
+        $this->setId(null);
+        $this->setLogin(null);
+        $this->setSenha(null);
+        $this->setReg_date(null);
     }
 
     /**
@@ -219,6 +242,10 @@ class Usuario
      */
     public function __toString(): string
     {
+        if (!$this->getId() && !$this->getLogin() && !$this->getSenha() && !$this->getReg_date()) {
+            return '{}';
+        }
+
         return json_encode(array(
             'id' => $this->getId(),
             'login' => $this->getLogin(),
