@@ -1,6 +1,6 @@
 <?php
 
-require_once 'config'.DIRECTORY_SEPARATOR.'constants.php';
+require_once str_replace(DIRECTORY_SEPARATOR.basename(__DIR__), '', __DIR__).DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'constants.php';
 
 class DbConnection extends PDO
 {
