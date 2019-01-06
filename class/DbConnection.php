@@ -20,7 +20,7 @@ class DbConnection extends PDO
 
     private function setParam($statement, $key, $value)
     {
-        $statement->bindParams($key, $value);
+        $statement->bindParam($key, $value);
     }
 
     public function query($rawQuery, $params = array())
