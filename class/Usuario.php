@@ -7,6 +7,12 @@ class Usuario
     private $senha;
     private $reg_date;
 
+    public function __construct($login = '', $password = '')
+    {
+        $this->setLogin($login);
+        $this->setSenha($password);
+    }
+
     /**
      * Get the value of id.
      */
@@ -91,25 +97,18 @@ class Usuario
      * Load User by a given ID.
      *
      * @param id type string
-     *
-     * @return user
      */
-    public function loadById($id)
+    public function loadById($id): void
     {
-        $sql = new DbConnection();
-
-        $results = $sql->select('SELECT * FROM tb_usuarios WHERE id = :ID', array(
+        $results = Usuario::exeSelect('SELECT * FROM tb_usuarios WHERE id = :ID', array(
             ':ID' => $id,
         ));
 
-        if (count($results) > 0) {
-            $row = $results[0];
-
-            $this->setId($row['id']);
-            $this->setLogin($row['login']);
-            $this->setSenha($row['senha']);
-            $this->setReg_date(new DateTime($row['reg_date']));
+        if (count($results) < 1) {
+            throw new Exception('Erro, id inexistente');
         }
+
+        $this->setData($results[0]);
     }
 
     /**
@@ -119,9 +118,7 @@ class Usuario
      */
     public static function getList()
     {
-        $sql = new DbConnection();
-
-        return $sql->select('SELECT * FROM tb_usuarios ORDER BY `login`;');
+        return json_encode(Usuario::exeSelect('SELECT * FROM tb_usuarios ORDER BY `login`;')[0]);
     }
 
     /**
@@ -133,11 +130,9 @@ class Usuario
      */
     public static function search($login)
     {
-        $sql = new DbConnection();
-
-        return $sql->select('SELECT * FROM `tb_usuarios` WHERE `login` LIKE :LOGIN ORDER BY `login`', array(
+        return json_encode(Usuario::exeSelect('SELECT * FROM `tb_usuarios` WHERE `login` LIKE :LOGIN ORDER BY `login`', array(
             ':LOGIN' => '%'.$login.'%',
-        ));
+        ))[0]);
     }
 
     /**
@@ -150,9 +145,7 @@ class Usuario
      */
     public function login($login, $password)
     {
-        $sql = new DbConnection();
-
-        $results = $sql->select('SELECT * FROM `tb_usuarios` WHERE `login` = :LOGIN AND `senha` = :PASSWD', array(
+        $results = Usuario::exeSelect('SELECT * FROM `tb_usuarios` WHERE `login` = :LOGIN AND `senha` = :PASSWD', array(
             ':LOGIN' => $login,
             ':PASSWD' => hash('sha256', $password),
         ));
@@ -162,12 +155,61 @@ class Usuario
             die;
         }
 
-        $row = $results[0];
+        $this->setData($results[0]);
+    }
 
-        $this->setId($row['id']);
-        $this->setLogin($row['login']);
-        $this->setSenha($row['senha']);
-        $this->setReg_date(new DateTime($row['reg_date']));
+    public function insert()
+    {
+        $results = Usuario::exeSelect('CALL sp_usuarios_insert(:LOGIN, :PASSWD)', array(
+            ':LOGIN' => $this->getLogin(),
+            ':PASSWD' => $this->getSenha(),
+        ));
+
+        if (count($results) < 1) {
+            throw new Exception('Erro ao inserir no banco de dados');
+        }
+
+        $this->setData($results[0]);
+    }
+
+    public function update($login, $senha)
+    {
+        $this->setLogin($login);
+        $this->setSenha($senha);
+
+        $sql = new DbConnection();
+
+        $sql->query('UPDATE tb_usuarios SET login = :LOGIN, senha = :PASSWD WHERE id = :ID', array(
+            ':LOGIN' => $this->getLogin(),
+            ':PASSWD' => $this->getSenha(),
+            ':ID' => $this->getId(),
+        ));
+    }
+
+    /**
+     * Static select DAO method.
+     *
+     * @param rawQuery type string
+     * @param params type array
+     */
+    private static function exeSelect($rawQuery, $params = array())
+    {
+        $sql = new DbConnection();
+
+        return $sql->select($rawQuery, $params);
+    }
+
+    /**
+     * Set values to the class attributes method.
+     *
+     * @param data type array
+     */
+    private function setData($data): void
+    {
+        $this->setId($data['id']);
+        $this->setLogin($data['login']);
+        $this->setSenha($data['senha']);
+        $this->setReg_date(new DateTime($data['reg_data']));
     }
 
     /**
@@ -175,7 +217,7 @@ class Usuario
      *
      * @return userData
      */
-    public function __toString()
+    public function __toString(): string
     {
         return json_encode(array(
             'id' => $this->getId(),
